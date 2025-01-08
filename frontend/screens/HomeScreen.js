@@ -9,7 +9,7 @@ const HomeScreen = () => {
     <View style={styles.container}>
       <View style={styles.imageContainer}>
         <Image
-          source={require('../assets/media/homebg.png')}
+          source={require('../screens/assets/media/homebg.png')}
           style={styles.image}
         />
         <Text style={styles.title}>Didiyie</Text>
