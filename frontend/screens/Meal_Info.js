@@ -1,45 +1,45 @@
 import React, { useState } from 'react';
-import { Text, View, TextInput, TouchableOpacity, ImageBackground, StyleSheet, ScrollView } from 'react-native';
+import {
+  Text,
+  View,
+  TouchableOpacity,
+  ImageBackground,
+  StyleSheet,
+  ScrollView,
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import Meal_Recommendation from './Meal_Recommendation';
 
 const MealInfo = () => {
+  const navigation = useNavigation();
+
+  // Hardcoded options
+  const dietaryRestrictions = ['Vegetarian', 'Vegan', 'Gluten-Free', 'Keto'];
+  const cuisinePreferences = ['Italian', 'Mexican', 'Chinese', 'Indian'];
+  const allergens = ['Peanuts', 'Dairy', 'Shellfish', 'Soy'];
+
   // State for selected options
-  const [selectedRestrictions, setSelectedRestrictions] = useState({
-    vegetarian: false,
-    vegan: false,
-    glutenFree: false,
-    lactoseFree: false,
-  });
-  const [selectedCuisines, setSelectedCuisines] = useState({
-    italian: false,
-    african: false,
-    asian: false,
-    mediterranean: false,
-  });
-  const [selectedAllergens, setSelectedAllergens] = useState({
-    nuts: false,
-    shellfish: false,
-    dairy: false,
-    gluten: false,
-  });
-  const [customPreference, setCustomPreference] = useState('');
+  const [selectedRestrictions, setSelectedRestrictions] = useState({});
+  const [selectedCuisines, setSelectedCuisines] = useState({});
+  const [selectedAllergens, setSelectedAllergens] = useState({});
 
   // Handle checkbox toggle
   const handleCheckboxToggle = (category, item) => {
     switch (category) {
       case 'restrictions':
-        setSelectedRestrictions(prevState => ({
+        setSelectedRestrictions((prevState) => ({
           ...prevState,
           [item]: !prevState[item],
         }));
         break;
       case 'cuisines':
-        setSelectedCuisines(prevState => ({
+        setSelectedCuisines((prevState) => ({
           ...prevState,
           [item]: !prevState[item],
         }));
         break;
       case 'allergens':
-        setSelectedAllergens(prevState => ({
+        setSelectedAllergens((prevState) => ({
           ...prevState,
           [item]: !prevState[item],
         }));
@@ -50,43 +50,43 @@ const MealInfo = () => {
   };
 
   // Handle form submission
-  const handleSubmit = () => {
-    const formData = {
-      restrictions: selectedRestrictions,
-      cuisines: selectedCuisines,
-      allergens: selectedAllergens,
-      customPreference: customPreference,
+  const handleSubmit = async () => {
+    const selectedData = {
+      restrictions: Object.keys(selectedRestrictions).filter(
+        (key) => selectedRestrictions[key]
+      ),
+      cuisines: Object.keys(selectedCuisines).filter(
+        (key) => selectedCuisines[key]
+      ),
+      allergens: Object.keys(selectedAllergens).filter(
+        (key) => selectedAllergens[key]
+      ),
     };
-    console.log('Form Data Submitted:', formData);
-    // You can export or send this data to an API or other storage
+
+    try {
+      const response = await fetch('http://localhost:3000/api/dishes/recommend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(selectedData),
+      });
+
+      const recommendedDishes = await response.json();
+      navigation.navigate('MealRecommendation', { recommendedDishes });
+    } catch (error) {
+      console.error('Error fetching recommendations:', error);
+    }
   };
 
   // Clear form inputs
   const handleClear = () => {
-    setSelectedRestrictions({
-      vegetarian: false,
-      vegan: false,
-      glutenFree: false,
-      lactoseFree: false,
-    });
-    setSelectedCuisines({
-      italian: false,
-      african: false,
-      asian: false,
-      mediterranean: false,
-    });
-    setSelectedAllergens({
-      nuts: false,
-      shellfish: false,
-      dairy: false,
-      gluten: false,
-    });
-    setCustomPreference('');
+    setSelectedRestrictions({});
+    setSelectedCuisines({});
+    setSelectedAllergens({});
   };
 
   return (
     <ImageBackground
-      source={require('../assets/media/mealinfobg.png')}
+      source={require('../screens/assets/media/mealinfobg.png')}
       style={styles.background}
     >
       <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -97,7 +97,7 @@ const MealInfo = () => {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Dietary Restrictions:</Text>
             <View style={styles.checkboxContainer}>
-              {['vegetarian', 'vegan', 'glutenFree', 'lactoseFree'].map(item => (
+              {dietaryRestrictions.map((item) => (
                 <TouchableOpacity
                   key={item}
                   style={styles.checkboxRow}
@@ -109,7 +109,7 @@ const MealInfo = () => {
                       selectedRestrictions[item] && styles.checkboxSelected,
                     ]}
                   />
-                  <Text style={styles.checkboxText}>{item.charAt(0).toUpperCase() + item.slice(1)}</Text>
+                  <Text style={styles.checkboxText}>{item}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -119,7 +119,7 @@ const MealInfo = () => {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Cuisine Preferences:</Text>
             <View style={styles.checkboxContainer}>
-              {['italian', 'african', 'asian', 'mediterranean'].map(item => (
+              {cuisinePreferences.map((item) => (
                 <TouchableOpacity
                   key={item}
                   style={styles.checkboxRow}
@@ -131,7 +131,7 @@ const MealInfo = () => {
                       selectedCuisines[item] && styles.checkboxSelected,
                     ]}
                   />
-                  <Text style={styles.checkboxText}>{item.charAt(0).toUpperCase() + item.slice(1)}</Text>
+                  <Text style={styles.checkboxText}>{item}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -141,7 +141,7 @@ const MealInfo = () => {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Allergens:</Text>
             <View style={styles.checkboxContainer}>
-              {['nuts', 'shellfish', 'dairy', 'gluten'].map(item => (
+              {allergens.map((item) => (
                 <TouchableOpacity
                   key={item}
                   style={styles.checkboxRow}
@@ -153,23 +153,10 @@ const MealInfo = () => {
                       selectedAllergens[item] && styles.checkboxSelected,
                     ]}
                   />
-                  <Text style={styles.checkboxText}>{item.charAt(0).toUpperCase() + item.slice(1)}</Text>
+                  <Text style={styles.checkboxText}>{item}</Text>
                 </TouchableOpacity>
               ))}
             </View>
-          </View>
-
-          {/* Custom Preference */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Custom Preference:</Text>
-            <TextInput
-              style={styles.customInput}
-              placeholder="Enter your custom preferences"
-              multiline
-              numberOfLines={4} // Makes the input box multi-line
-              value={customPreference}
-              onChangeText={setCustomPreference} // Update state on input change
-            />
           </View>
 
           {/* Buttons */}
@@ -201,17 +188,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   container: {
-    backgroundColor: 'rgba(0, 0, 0, 0.8)', // Darker black transparent underlay
-    padding: 30, // Zoom in the container by increasing padding
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    padding: 30,
     borderRadius: 10,
-    width: '112%',
-    borderLeftWidth: 0,
-    borderTopWidth: -10,
-    borderBottomWidth: -0.2,
-    borderColor: '#fff',
-    marginLeft: -12, // To ensure full width
-    marginRight: 0, // To ensure full width
-    minHeight: '80%', // Ensure the container takes up a larger portion of the screen
+    width: '90%',
+    minHeight: '80%',
   },
   title: {
     fontSize: 24,
@@ -236,6 +217,7 @@ const styles = StyleSheet.create({
   checkboxRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 10,
   },
   checkbox: {
     width: 20,
@@ -243,46 +225,33 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#fff',
     marginRight: 10,
-    backgroundColor: 'transparent',
     borderRadius: 4,
   },
   checkboxSelected: {
-    backgroundColor: '#34C759', // Green checkmark color
+    backgroundColor: '#34C759',
     borderColor: '#34C759',
   },
   checkboxText: {
-    color: '#f5f5dc', // Cream color for the text
-  },
-  customInput: {
-    backgroundColor: '#f0f0f0',
-    padding: 10,
-    borderRadius: 8,
-    fontSize: 16,
-    maxWidth: '95%', // Ensure it doesn't expand horizontally
-    minHeight: 80, // Minimum height
-    maxHeight: 500, // Maximum height (to prevent it from expanding too much)
-    textAlignVertical: 'top', // Align text to the top of the input box
+    color: '#f5f5dc',
   },
   buttonContainer: {
-    flexDirection: 'column', // Stack buttons vertically
-    justifyContent: 'center', // Center the buttons vertically
-    alignItems: 'center', // Center the buttons horizontally
-    marginTop: 10, // Add some space between the inputs and buttons
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
   },
   buttonClear: {
     backgroundColor: '#FF3B30',
     padding: 15,
     borderRadius: 8,
-    marginLeft: -22,
-    width: '80%', // Adjust width to fit the screen better
-    marginBottom: 10, // Add space between the buttons
+    width: '80%',
+    marginBottom: 10,
   },
   buttonSubmit: {
     backgroundColor: '#34C759',
     padding: 15,
     borderRadius: 8,
-    marginLeft: -22,
-    width: '80%', // Adjust width to fit the screen better
+    width: '80%',
   },
   buttonText: {
     color: 'white',
